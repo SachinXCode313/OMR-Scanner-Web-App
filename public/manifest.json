@@ -1,0 +1,17 @@
+{
+  "name": "OMR Scanner",
+  "short_name": "OMR Scan",
+  "description": "Real-time Optical Mark Recognition scanner using OpenCV.js",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#f8fafc",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
