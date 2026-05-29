@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="OMR Scanner — Real-time Optical Mark Recognition scanner using OpenCV.js with live AR overlay, perspective correction, and automatic bubble detection." />
+  <title>OMR Scanner — Live AR Scanner</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⊞</text></svg>" />
+
+  <!-- OpenCV.js from CDN — loaded before app code -->
+  <script>
+    // Module pattern for OpenCV.js initialization
+    var Module = {
+      onRuntimeInitialized: function() {
+        console.log('OpenCV.js ready:', cv.getBuildInformation ? 'Full build' : 'Lite build');
+        document.dispatchEvent(new Event('opencv-ready'));
+      }
+    };
+  </script>
+  <script async src="https://docs.opencv.org/4.9.0/opencv.js" type="text/javascript"></script>
+</head>
+<body>
+  <div id="app">
+
+    <!-- ─── Header ─────────────────────────────────────────────────────── -->
+    <header class="app-header">
+      <div class="app-logo">
+        <div class="logo-icon">⊞</div>
+        <h1>OMR Scanner</h1>
+      </div>
+      <div class="header-controls">
+        <div class="control-group">
+          <label for="camera-select">Camera</label>
+          <select id="camera-select"></select>
+        </div>
+        <div class="control-group">
+          <label for="template-select">Template</label>
+          <select id="template-select"></select>
+        </div>
+      </div>
+    </header>
+
+    <!-- ─── Main View (Camera / Review Canvas) ─────────────────────────── -->
+    <main class="main-view">
+      <!-- Hidden video element (source for frames) -->
+      <video id="camera-video" playsinline muted></video>
+      <!-- Hidden canvas for frame extraction -->
+      <canvas id="hidden-canvas"></canvas>
+
+      <!-- Live scanning canvas with AR overlay -->
+      <canvas id="live-canvas"></canvas>
+      <!-- Review canvas showing flattened + marked paper -->
+      <canvas id="review-canvas" class="hidden"></canvas>
+
+      <!-- Status bar overlay -->
+      <div id="status-bar" class="status-bar loading">
+        <span id="status-dot" class="status-dot"></span>
+        <span id="status-text" class="status-text">Loading OpenCV.js...</span>
+      </div>
+
+      <!-- Loading overlay -->
+      <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading OpenCV.js engine...</div>
+      </div>
+    </main>
+
+    <!-- ─── Sidebar ──────────────────────────────────────────────────────── -->
+    <aside class="sidebar">
+
+      <!-- Scan Controls Panel -->
+      <div id="scan-panel" class="panel active">
+        <div class="panel-title">Scan Controls</div>
+        <div class="btn-group">
+          <button id="capture-btn" class="btn btn-primary" disabled>
+            ⊞ Capture
+          </button>
+          <button id="approve-btn" class="btn btn-success hidden">
+            ✓ Approve
+          </button>
+          <button id="retake-btn" class="btn btn-danger hidden">
+            ✕ Retake
+          </button>
+        </div>
+      </div>
+
+      <!-- Review Panel -->
+      <div id="review-panel" class="panel">
+        <div class="panel-title">Review Actions</div>
+        <div class="btn-group">
+          <button id="export-btn" class="btn btn-outline hidden">
+            ↓ Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Results Panel -->
+      <div id="results-panel" class="panel results-panel">
+        <div class="panel-title">Detected Responses</div>
+        <div class="results-scroll">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody id="results-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Keyboard Shortcuts -->
+      <div class="shortcuts">
+        <div class="shortcuts-title">Keyboard Shortcuts</div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Space</span>
+          <span class="shortcut-label">Capture (when locked)</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Y</span>
+          <span class="shortcut-label">Approve scan</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">N</span>
+          <span class="shortcut-label">Retake scan</span>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>

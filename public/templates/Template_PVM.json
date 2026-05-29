@@ -1,0 +1,77 @@
+{
+  "pageDimensions": [1000, 1400],
+  "bubbleDimensions": [25, 25],
+  "customLabels": {},
+  "fieldBlocks": {
+    "Int_Block_Q5": {
+      "bubbleValues": ["1", "2", "3", "4", "5"],
+      "direction": "horizontal",
+      "fieldLabels": ["template"],
+      "bubblesGap": 38,
+      "labelsGap": 70,
+      "origin": [780, 45]
+    },
+
+    "Int_Block_Q6": {
+      "bubbleValues": ["3", "4", "5", "6", "7", "8"],
+      "direction": "vertical",
+      "fieldLabels": ["class"],
+      "bubblesGap": 31,
+      "labelsGap": 20,
+      "origin": [780, 280]
+    },
+
+    "Paper_Code": {
+      "fieldType": "QTYPE_INT_FROM_1",
+      "fieldLabels": ["paper_code1..2"],
+      "bubblesGap": 31,
+      "labelsGap": 38.5,
+      "origin": [817, 280]
+    },
+
+    "Roll": {
+      "fieldType": "QTYPE_INT_FROM_1",
+      "fieldLabels": ["roll1..13"],
+      "bubblesGap": 31,
+      "labelsGap": 38.5,
+      "origin": [200, 280]
+    },
+    "MCQBlock1": {
+      "fieldType": "QTYPE_MCQ4",
+      "origin": [121, 622],
+      "fieldLabels": ["q1..10"],
+      "bubblesGap": 38.5,
+      "labelsGap": 30.6
+    },
+    "MCQBlock2": {
+      "fieldType": "QTYPE_MCQ4",
+      "origin": [353, 622],
+      "fieldLabels": ["q11..20"],
+      "bubblesGap": 38.5,
+      "labelsGap": 30.6
+    },
+    "MCQBlock3": {
+      "fieldType": "QTYPE_MCQ4",
+      "origin": [585, 622],
+      "fieldLabels": ["q21..30"],
+      "bubblesGap": 38.5,
+      "labelsGap": 30.6
+    },
+    "MCQBlock4": {
+      "fieldType": "QTYPE_MCQ4",
+      "origin": [817, 622],
+      "fieldLabels": ["q31..40"],
+      "bubblesGap": 38.5,
+      "labelsGap": 30.6
+    }
+  },
+  "preProcessors": [
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "relativePath": "omr_marker.jpg",
+        "sheetToMarkerWidthRatio": 10
+      }
+    }
+  ]
+}
