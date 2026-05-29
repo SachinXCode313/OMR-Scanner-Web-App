@@ -98,6 +98,11 @@ export class OMRApp {
     this.reviewPanel = document.getElementById("review-panel");
     this.resultsPanel = document.getElementById("results-panel");
     this.loadingOverlay = document.getElementById("loading-overlay");
+
+    // New mobile UI elements
+    this.settingsToggle = document.getElementById("settings-toggle");
+    this.settingsDrawer = document.getElementById("settings-drawer");
+    this.resultsHandle = document.getElementById("results-handle");
   }
 
   bindEvents() {
@@ -132,6 +137,19 @@ export class OMRApp {
     this.cameraSelect.addEventListener("change", (e) => {
       this.switchCamera(e.target.value);
     });
+
+    // Settings drawer toggle
+    this.settingsToggle.addEventListener("click", () => {
+      this.settingsDrawer.classList.toggle("open");
+      this.settingsToggle.classList.toggle("active");
+    });
+
+    // Results drawer — tap handle to collapse
+    if (this.resultsHandle) {
+      this.resultsHandle.addEventListener("click", () => {
+        this.resultsPanel.classList.toggle("active");
+      });
+    }
   }
 
   // ─── Template Loading ───────────────────────────────────────────────────
@@ -410,14 +428,57 @@ export class OMRApp {
   displayResults(response, multiMarked) {
     this.resultsBody.innerHTML = "";
 
-    // Sort entries for display
-    const entries = Object.entries(response).sort((a, b) => {
-      const aKey = a[0];
-      const bKey = b[0];
-      return aKey.localeCompare(bKey, undefined, { numeric: true, sensitivity: "base" });
-    });
+    // Show/hide multi-marked warning banner at top
+    const banner = document.getElementById("multi-marked-banner");
+    if (banner) {
+      banner.classList.toggle("hidden", !multiMarked);
+    }
 
-    for (const [key, value] of entries) {
+    // ─── Group numbered fields for combined display ───
+    // Collect paper_code1, paper_code2, ... → "Paper Code"
+    // Collect roll1, roll2, ..., roll13 → "Roll No"
+    const paperCodeParts = [];
+    const rollParts = [];
+    const otherEntries = [];
+
+    for (const [key, value] of Object.entries(response)) {
+      const paperMatch = key.match(/^paper_code(\d+)$/);
+      const rollMatch = key.match(/^roll(\d+)$/);
+
+      if (paperMatch) {
+        paperCodeParts.push({ idx: parseInt(paperMatch[1], 10), value: value || "" });
+      } else if (rollMatch) {
+        rollParts.push({ idx: parseInt(rollMatch[1], 10), value: value || "" });
+      } else {
+        otherEntries.push([key, value]);
+      }
+    }
+
+    // Sort by index and concatenate
+    paperCodeParts.sort((a, b) => a.idx - b.idx);
+    rollParts.sort((a, b) => a.idx - b.idx);
+
+    const combinedPaperCode = paperCodeParts.map(p => p.value).join("");
+    const combinedRoll = rollParts.map(p => p.value).join("");
+
+    // Build display entries — combined fields first, then others sorted
+    const displayEntries = [];
+
+    if (rollParts.length > 0) {
+      displayEntries.push(["Roll No", combinedRoll]);
+    }
+    if (paperCodeParts.length > 0) {
+      displayEntries.push(["Paper Code", combinedPaperCode]);
+    }
+
+    // Sort remaining entries naturally
+    otherEntries.sort((a, b) =>
+      a[0].localeCompare(b[0], undefined, { numeric: true, sensitivity: "base" })
+    );
+    displayEntries.push(...otherEntries);
+
+    // Render table rows
+    for (const [key, value] of displayEntries) {
       const row = document.createElement("tr");
 
       const keyCell = document.createElement("td");
@@ -432,13 +493,6 @@ export class OMRApp {
       row.appendChild(keyCell);
       row.appendChild(valueCell);
       this.resultsBody.appendChild(row);
-    }
-
-    if (multiMarked) {
-      const warningRow = document.createElement("tr");
-      warningRow.classList.add("multi-marked-warning");
-      warningRow.innerHTML = `<td colspan="2">⚠ Multi-marked bubbles detected</td>`;
-      this.resultsBody.appendChild(warningRow);
     }
   }
 
@@ -468,24 +522,36 @@ export class OMRApp {
 
   updateStatus(text, statusClass) {
     this.statusText.textContent = text;
-    this.statusBar.className = `status-bar ${statusClass}`;
+    this.statusBar.className = `status-pill ${statusClass}`;
   }
 
   updateUIForState() {
     const isScanning = this.state === "SCANNING";
     const isReview = this.state === "REVIEW";
 
+    // Action panels
     this.scanPanel.classList.toggle("active", isScanning);
     this.reviewPanel.classList.toggle("active", isReview);
+
+    // Results drawer
     this.resultsPanel.classList.toggle("active", isReview);
+
+    // Canvas visibility
     this.liveCanvas.classList.toggle("hidden", isReview);
     this.reviewCanvas.classList.toggle("hidden", isScanning);
     this.loadingOverlay.classList.toggle("hidden", this.state !== "LOADING");
 
+    // Button visibility
     this.captureBtn.classList.toggle("hidden", isReview);
     this.approveBtn.classList.toggle("hidden", isScanning);
     this.retakeBtn.classList.toggle("hidden", isScanning);
     this.exportBtn.classList.toggle("hidden", isScanning || !this.lastResults);
+
+    // Close settings drawer when scanning
+    if (isScanning) {
+      this.settingsDrawer.classList.remove("open");
+      this.settingsToggle.classList.remove("active");
+    }
   }
 
   // ─── Cleanup ────────────────────────────────────────────────────────────

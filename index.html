@@ -2,14 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="description" content="OMR Scanner — Real-time Optical Mark Recognition scanner using OpenCV.js with live AR overlay, perspective correction, and automatic bubble detection." />
+  <meta name="theme-color" content="#f8fafc" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>OMR Scanner — Live AR Scanner</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⊞</text></svg>" />
+  <link rel="stylesheet" href="/style.css" />
 
   <!-- OpenCV.js from CDN — loaded before app code -->
   <script>
-    // Module pattern for OpenCV.js initialization
     var Module = {
       onRuntimeInitialized: function() {
         console.log('OpenCV.js ready:', cv.getBuildInformation ? 'Full build' : 'Lite build');
@@ -22,26 +25,33 @@
 <body>
   <div id="app">
 
-    <!-- ─── Header ─────────────────────────────────────────────────────── -->
-    <header class="app-header">
-      <div class="app-logo">
+    <!-- ─── Top Bar ───────────────────────────────────────────────────── -->
+    <header class="top-bar">
+      <div class="top-bar-left">
         <div class="logo-icon">⊞</div>
         <h1>OMR Scanner</h1>
       </div>
-      <div class="header-controls">
-        <div class="control-group">
-          <label for="camera-select">Camera</label>
-          <select id="camera-select"></select>
-        </div>
-        <div class="control-group">
-          <label for="template-select">Template</label>
-          <select id="template-select"></select>
-        </div>
-      </div>
+      <button id="settings-toggle" class="icon-btn" aria-label="Settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
     </header>
 
-    <!-- ─── Main View (Camera / Review Canvas) ─────────────────────────── -->
-    <main class="main-view">
+    <!-- ─── Settings Drawer ───────────────────────────────────────────── -->
+    <div id="settings-drawer" class="settings-drawer">
+      <div class="setting-row">
+        <label for="camera-select">Camera</label>
+        <select id="camera-select"></select>
+      </div>
+      <div class="setting-row">
+        <label for="template-select">Template</label>
+        <select id="template-select"></select>
+      </div>
+    </div>
+
+    <!-- ─── Camera View ───────────────────────────────────────────────── -->
+    <main class="camera-view">
       <!-- Hidden video element (source for frames) -->
       <video id="camera-video" playsinline muted></video>
       <!-- Hidden canvas for frame extraction -->
@@ -52,8 +62,8 @@
       <!-- Review canvas showing flattened + marked paper -->
       <canvas id="review-canvas" class="hidden"></canvas>
 
-      <!-- Status bar overlay -->
-      <div id="status-bar" class="status-bar loading">
+      <!-- Status pill overlay -->
+      <div id="status-bar" class="status-pill loading">
         <span id="status-dot" class="status-dot"></span>
         <span id="status-text" class="status-text">Loading OpenCV.js...</span>
       </div>
@@ -65,71 +75,67 @@
       </div>
     </main>
 
-    <!-- ─── Sidebar ──────────────────────────────────────────────────────── -->
-    <aside class="sidebar">
-
-      <!-- Scan Controls Panel -->
-      <div id="scan-panel" class="panel active">
-        <div class="panel-title">Scan Controls</div>
-        <div class="btn-group">
-          <button id="capture-btn" class="btn btn-primary" disabled>
-            ⊞ Capture
-          </button>
-          <button id="approve-btn" class="btn btn-success hidden">
-            ✓ Approve
-          </button>
-          <button id="retake-btn" class="btn btn-danger hidden">
-            ✕ Retake
-          </button>
-        </div>
+    <!-- ─── Bottom Action Bar ─────────────────────────────────────────── -->
+    <nav class="action-bar">
+      <!-- SCANNING state buttons -->
+      <div id="scan-panel" class="action-panel active">
+        <button id="capture-btn" class="action-btn capture-btn" disabled>
+          <div class="capture-ring">
+            <div class="capture-inner"></div>
+          </div>
+          <span>Capture</span>
+        </button>
       </div>
 
-      <!-- Review Panel -->
-      <div id="review-panel" class="panel">
-        <div class="panel-title">Review Actions</div>
-        <div class="btn-group">
-          <button id="export-btn" class="btn btn-outline hidden">
-            ↓ Export CSV
-          </button>
-        </div>
+      <!-- REVIEW state buttons -->
+      <div id="review-panel" class="action-panel">
+        <button id="retake-btn" class="action-btn retake-btn hidden">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+          </svg>
+          <span>Retake</span>
+        </button>
+        <button id="approve-btn" class="action-btn approve-btn hidden">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>Approve</span>
+        </button>
+        <button id="export-btn" class="action-btn export-btn hidden">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>CSV</span>
+        </button>
       </div>
+    </nav>
 
-      <!-- Results Panel -->
-      <div id="results-panel" class="panel results-panel">
-        <div class="panel-title">Detected Responses</div>
-        <div class="results-scroll">
-          <table class="results-table">
-            <thead>
-              <tr>
-                <th>Field</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody id="results-body">
-              <!-- Populated dynamically -->
-            </tbody>
-          </table>
-        </div>
+    <!-- ─── Results Drawer (slides up from bottom) ────────────────────── -->
+    <div id="results-panel" class="results-drawer">
+      <div id="results-handle" class="drawer-handle">
+        <div class="handle-bar"></div>
+        <span class="drawer-title">Detected Responses</span>
       </div>
-
-      <!-- Keyboard Shortcuts -->
-      <div class="shortcuts">
-        <div class="shortcuts-title">Keyboard Shortcuts</div>
-        <div class="shortcut-item">
-          <span class="shortcut-key">Space</span>
-          <span class="shortcut-label">Capture (when locked)</span>
-        </div>
-        <div class="shortcut-item">
-          <span class="shortcut-key">Y</span>
-          <span class="shortcut-label">Approve scan</span>
-        </div>
-        <div class="shortcut-item">
-          <span class="shortcut-key">N</span>
-          <span class="shortcut-label">Retake scan</span>
-        </div>
+      <div id="multi-marked-banner" class="multi-marked-banner hidden">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span>Multi-marked bubbles detected</span>
       </div>
-
-    </aside>
+      <div class="results-scroll">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody id="results-body">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
 
   </div>
 
